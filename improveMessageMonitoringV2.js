@@ -2,16 +2,18 @@
 // @name        Verbesserung Nachrichtenüberwachung Sales Cloud v2
 // @match       https://*.crm.cloud.sap/*
 // @grant       none
-// @version     1.7
+// @version     1.8
 // @description Verbesserung der Nachrichtenüberwachung
 // ==/UserScript==
 
 "use strict";
 
+const HOST = globalThis.location.host;
+
 const downloadAllErrorMessages = async () => {
     try {
         const inboundErrorMessagesData = await fetch(
-            `https://${window.location.host}/sap/c4c/api/v1/inbound-data-connector-service/messages?$top=0&$orderby=messageHeader/adminData/updatedOn+desc&$filter=messageHeader/processingStatus+eq+ERROR&$exclude=messageRequest`
+            `https://${HOST}/sap/c4c/api/v1/inbound-data-connector-service/messages?$top=0&$orderby=messageHeader/adminData/updatedOn+desc&$filter=messageHeader/processingStatus+eq+ERROR&$exclude=messageRequest`
         ).then((res) => res.json());
         const inboundErrorMessages = inboundErrorMessagesData?.value;
         console.log("number of inbound error messages:", inboundErrorMessages?.length);
@@ -21,14 +23,14 @@ const downloadAllErrorMessages = async () => {
         for (const message of inboundErrorMessages) {
             console.log("process error message");
             const errorMessageSubMessageData = await fetch(
-                `https://${window.location.host}/sap/c4c/api/v1/inbound-data-connector-service/messages/${message.id}/requests`
+                `https://${HOST}/sap/c4c/api/v1/inbound-data-connector-service/messages/${message.id}/requests`
             ).then((res) => res.json());
             message.subMessages = errorMessageSubMessageData?.value?.filter(
                 (subMessage) => subMessage.messageHeader.processingStatus === "ERROR"
             );
             message.subMessages = await Promise.all(
                 message.subMessages.map(async (subMessage) => {
-                    const fetchUrl = `https://${window.location.host}/sap/c4c/api/v1/inbound-data-connector-service/messages/${message.id}/requests/${subMessage.messageHeader.id}`;
+                    const fetchUrl = `https://${HOST}/sap/c4c/api/v1/inbound-data-connector-service/messages/${message.id}/requests/${subMessage.messageHeader.id}`;
                     const errorMessageSubMessageDetailsData = await fetch(fetchUrl).then((res) => res.json());
                     const newSubMessage = errorMessageSubMessageDetailsData?.value;
                     inboundErrorsOnly +=
@@ -46,7 +48,7 @@ const downloadAllErrorMessages = async () => {
         }
 
         const outboundErrorMessagesData = await fetch(
-            `https://${window.location.host}/sap/c4c/api/v1/outbound-data-connector-service/messages?$top=0&$orderby=messageHeader/adminData/updatedOn+desc&$filter=messageHeader/processingStatus+eq+ERROR&$exclude=messageRequest`
+            `https://${HOST}/sap/c4c/api/v1/outbound-data-connector-service/messages?$top=0&$orderby=messageHeader/adminData/updatedOn+desc&$filter=messageHeader/processingStatus+eq+ERROR&$exclude=messageRequest`
         ).then((res) => res.json());
         const outboundErrorMessages = outboundErrorMessagesData?.value;
         console.log("number of outbound error messages:", outboundErrorMessages?.length);
@@ -56,14 +58,14 @@ const downloadAllErrorMessages = async () => {
         for (const message of outboundErrorMessages) {
             console.log("process error message");
             const errorMessageSubMessageData = await fetch(
-                `https://${window.location.host}/sap/c4c/api/v1/outbound-data-connector-service/messages/${message.id}/requests`
+                `https://${HOST}/sap/c4c/api/v1/outbound-data-connector-service/messages/${message.id}/requests`
             ).then((res) => res.json());
             message.subMessages = errorMessageSubMessageData?.value?.filter(
                 (subMessage) => subMessage.messageHeader.processingStatus === "ERROR"
             );
             message.subMessages = await Promise.all(
                 message.subMessages.map(async (subMessage) => {
-                    const fetchUrl = `https://${window.location.host}/sap/c4c/api/v1/outbound-data-connector-service/messages/${message.id}/requests/${subMessage.messageHeader.id}`;
+                    const fetchUrl = `https://${HOST}/sap/c4c/api/v1/outbound-data-connector-service/messages/${message.id}/requests/${subMessage.messageHeader.id}`;
                     const errorMessageSubMessageDetailsData = await fetch(fetchUrl).then((res) => res.json());
                     const newSubMessage = errorMessageSubMessageDetailsData?.value;
                     outboundErrorsOnly +=
@@ -83,22 +85,22 @@ const downloadAllErrorMessages = async () => {
         // Download all failed payloads as errors.json
         const jsonString = JSON.stringify({ Inbound: inboundErrorMessages, Outbound: outboundErrorMessages }, null, 2);
         let blob = new Blob([jsonString], { type: "application/json" });
-        let url = window.URL.createObjectURL(blob);
+        let url = globalThis.URL.createObjectURL(blob);
         let a = document.createElement("a");
         a.href = url;
         a.download = "errorMessages.json";
         a.click();
-        window.URL.revokeObjectURL(url);
+        globalThis.URL.revokeObjectURL(url);
         // Download errormessages as errors.txt
         blob = new Blob(
             ["Inbound-Errors:\n" + inboundErrorsOnly.trim() + "\n\nOutbound-Errors:\n" + outboundErrorsOnly.trim()],
             { type: "text/plain" }
         );
-        url = window.URL.createObjectURL(blob);
+        url = globalThis.URL.createObjectURL(blob);
         a.href = url;
         a.download = "errors.txt";
         a.click();
-        window.URL.revokeObjectURL(url);
+        globalThis.URL.revokeObjectURL(url);
     } catch (error) {
         console.error("Error fetching messages:", error);
     }
@@ -107,29 +109,33 @@ const downloadAllErrorMessages = async () => {
 const processMessageTable = () => {
     const table = document?.querySelector("sap-crm-table");
 
-    const group =
-        document?.querySelector('sap-crm-toggle-button-group[slot="right"]') ||
-        document?.querySelector("sap-crm-toggle-button-group");
-    const incomingBtn = group?.querySelector('sap-crm-toggle-button[icon="incoming_email"]').shadowRoot?.querySelector("button");
-    const outgoingBtn = group?.querySelector('sap-crm-toggle-button[icon="outgoing_email"]').shadowRoot?.querySelector("button");
+    if (table) {
+        const group =
+            document?.querySelector('sap-crm-toggle-button-group[slot="right"]') ||
+            document?.querySelector("sap-crm-toggle-button-group");
+        const incomingBtn = group
+            ?.querySelector('sap-crm-toggle-button[icon="incoming_email"]')
+            .shadowRoot?.querySelector("button");
+        const outgoingBtn = group
+            ?.querySelector('sap-crm-toggle-button[icon="outgoing_email"]')
+            .shadowRoot?.querySelector("button");
 
-    const isPressed = (btn) => !!btn && btn.getAttribute("aria-pressed") === "true";
+        const isPressed = (btn) => !!btn && btn.getAttribute("aria-pressed") === "true";
 
-    let direction;
-    if (isPressed(incomingBtn)) {
-        direction = "inbound";
-    } else if (isPressed(outgoingBtn)) {
-        direction = "outbound";
-    } else {
-        console.log("neither inbound nor outbound selected, skipping...");
-        direction = null;
-    }
-
-    if (table && direction) {
-        console.log("replace error texts...");
+        let direction;
+        if (isPressed(incomingBtn)) {
+            direction = "inbound";
+            console.log("replace error texts for inbound messagetable...");
+        } else if (isPressed(outgoingBtn)) {
+            direction = "outbound";
+            console.log("replace error texts for outbound messagetable...");
+        } else {
+            console.log("neither inbound nor outbound detected, skipping messagetable processing...");
+            return;
+        }
 
         const rows = table.querySelectorAll("sap-crm-table-row");
-        rows.forEach((row) => {
+        for (const row of rows) {
             const messageId = row
                 ?.querySelector("sap-crm-table-cell:nth-child(2)")
                 ?.querySelector("sap-crm-label")
@@ -139,10 +145,8 @@ const processMessageTable = () => {
                 ?.querySelector("sap-crm-tag")
                 ?.shadowRoot?.querySelector("span");
 
-            //console.log("messageId:", messageId, "-", statusElement?.textContent.trim());
-
             if (["Fehler", "ERROR"].includes(statusElement?.textContent?.trim()) && messageId) {
-                const fetchUrl = `https://${window.location.host}/sap/c4c/api/v1/${direction}-data-connector-service/messages/${messageId}/requests`;
+                const fetchUrl = `https://${HOST}/sap/c4c/api/v1/${direction}-data-connector-service/messages/${messageId}/requests`;
                 fetch(fetchUrl)
                     .then((response) => {
                         if (!response.ok) {
@@ -159,12 +163,11 @@ const processMessageTable = () => {
                                     message.entityKey.externalReferenceKey?.displayId,
                                 subMessageId: message.messageHeader.id
                             }));
-                        //console.log(subMessagesWithErrorsIds);
                         return subMessagesWithErrorsIds;
                     })
                     .then((subMessagesWithErrorsIds) => {
                         const subMessageIdToFetch = subMessagesWithErrorsIds[0]?.subMessageId;
-                        const fetchUrl = `https://${window.location.host}/sap/c4c/api/v1/${direction}-data-connector-service/messages/${messageId}/requests/${subMessageIdToFetch}`;
+                        const fetchUrl = `https://${HOST}/sap/c4c/api/v1/${direction}-data-connector-service/messages/${messageId}/requests/${subMessageIdToFetch}`;
                         fetch(fetchUrl)
                             .then((response) => {
                                 if (!response.ok) {
@@ -194,7 +197,7 @@ const processMessageTable = () => {
                         console.error(`Fehler beim Message-API-Request ( ${fetchUrl} ):`, error);
                     });
             }
-        });
+        }
 
         const flexElement = document.querySelector('sap-crm-flex[slot="custom-actions"]');
         if (flexElement && !document.getElementById("downloadAllErrorsButton")) {
@@ -214,6 +217,19 @@ const processSubMessageTable = () => {
     const table = document.querySelector("crm-monitoring-message-requests")?.shadowRoot?.querySelector("sap-crm-table");
 
     if (table) {
+        const isOutbound = Array.from(document?.querySelector('crm-monitoring-message-requests').shadowRoot?.querySelectorAll('sap-crm-label')).some(el => el.textContent.includes('Empfängerkommunikationssystem'));
+        const isInbound = Array.from(document?.querySelector('crm-monitoring-message-requests').shadowRoot?.querySelectorAll('sap-crm-label')).some(el => el.textContent.includes('Senderkommunikationssystem'));
+        let direction;
+        if (isInbound) {
+            direction = "inbound";
+            console.log("replace error texts for inbound submessagetable...");
+        } else if (isOutbound) {
+            direction = "outbound";
+            console.log("replace error texts for outbound submessagetable...");
+        } else {
+            console.log("neither inbound nor outbound detected, skipping submessagetable processing...");
+            return;
+        }
         const messageId = document
             ?.querySelector("crm-monitoring-message-requests")
             ?.shadowRoot?.querySelector("sap-crm-value")
@@ -221,7 +237,7 @@ const processSubMessageTable = () => {
 
         const rows = table.querySelectorAll("sap-crm-table-row");
 
-        rows.forEach((row) => {
+        for (const row of rows) {
             const subMessageId = row
                 ?.querySelector("sap-crm-table-cell:nth-child(1)")
                 ?.querySelector("sap-crm-label")
@@ -231,10 +247,8 @@ const processSubMessageTable = () => {
                 ?.querySelector("sap-crm-tag")
                 ?.shadowRoot?.querySelector("span");
 
-            //console.log('subMessageId:', subMessageId, '-', statusElement?.textContent.trim());
-
             if (["Fehler", "ERROR"].includes(statusElement?.textContent?.trim()) && messageId && subMessageId) {
-                const fetchUrl = `https://${window.location.host}/sap/c4c/api/v1/inbound-data-connector-service/messages/${messageId}/requests/${subMessageId}`;
+                const fetchUrl = `https://${HOST}/sap/c4c/api/v1/${direction}-data-connector-service/messages/${messageId}/requests/${subMessageId}`;
                 fetch(fetchUrl)
                     .then((response) => {
                         if (!response.ok) {
@@ -249,8 +263,6 @@ const processSubMessageTable = () => {
                             data?.value?.error?.message ||
                             "Fehlerdetails nicht verfügbar";
 
-                        //console.log("Error messages:", errorDetails);
-
                         statusElement.textContent = errorDetails;
                         row.querySelector("sap-crm-tag")
                             ?.shadowRoot?.querySelector("div")
@@ -263,50 +275,7 @@ const processSubMessageTable = () => {
                         console.error(`Fehler beim API-Request ( ${fetchUrl} ):`, error);
                     });
             }
-        });
-        rows.forEach((row) => {
-            const subMessageId = row
-                ?.querySelector("sap-crm-table-cell:nth-child(1)")
-                ?.querySelector("sap-crm-label")
-                ?.textContent?.trim();
-            const statusElement = row
-                ?.querySelector("sap-crm-table-cell:nth-child(2)")
-                ?.querySelector("sap-crm-tag")
-                ?.shadowRoot?.querySelector("span");
-
-            //console.log('subMessageId:', subMessageId, '-', statusElement?.textContent.trim());
-
-            if (["Fehler", "ERROR"].includes(statusElement?.textContent?.trim()) && messageId && subMessageId) {
-                const fetchUrl = `https://${window.location.host}/sap/c4c/api/v1/outbound-data-connector-service/messages/${messageId}/requests/${subMessageId}`;
-                fetch(fetchUrl)
-                    .then((response) => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP-Fehler: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then((data) => {
-                        const errorDetails =
-                            data?.value?.error?.details?.[0]?.details?.map((d) => d.message)?.join(" | ") ||
-                            data?.value?.error?.details?.[0]?.message ||
-                            data?.value?.error?.message ||
-                            "Fehlerdetails nicht verfügbar";
-
-                        //console.log("Error messages:", errorDetails);
-
-                        statusElement.textContent = errorDetails;
-                        row.querySelector("sap-crm-tag")
-                            ?.shadowRoot?.querySelector("div")
-                            ?.style.setProperty("max-width", "unset", "important");
-                        row.querySelector("sap-crm-tag")
-                            ?.shadowRoot?.querySelector("div")
-                            ?.style.setProperty("text-transform", "unset", "important");
-                    })
-                    .catch((error) => {
-                        console.error(`Fehler beim API-Request ( ${fetchUrl} ):`, error);
-                    });
-            }
-        });
+        }
     }
 };
 
