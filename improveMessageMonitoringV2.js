@@ -2,7 +2,7 @@
 // @name        Verbesserung Nachrichtenüberwachung Sales Cloud v2
 // @match       https://*.crm.cloud.sap/*
 // @grant       none
-// @version     1.8
+// @version     1.9
 // @description Verbesserung der Nachrichtenüberwachung
 // ==/UserScript==
 
@@ -136,10 +136,7 @@ const processMessageTable = () => {
 
         const rows = table.querySelectorAll("sap-crm-table-row");
         for (const row of rows) {
-            const messageId = row
-                ?.querySelector("sap-crm-table-cell:nth-child(2)")
-                ?.querySelector("sap-crm-label")
-                ?.textContent?.trim();
+            const messageId = row.id;
             const statusElement = row
                 ?.querySelector("sap-crm-table-cell:nth-child(3)")
                 ?.querySelector("sap-crm-tag")
@@ -238,10 +235,7 @@ const processSubMessageTable = () => {
         const rows = table.querySelectorAll("sap-crm-table-row");
 
         for (const row of rows) {
-            const subMessageId = row
-                ?.querySelector("sap-crm-table-cell:nth-child(1)")
-                ?.querySelector("sap-crm-label")
-                ?.textContent?.trim();
+            const subMessageId = row.id;
             const statusElement = row
                 ?.querySelector("sap-crm-table-cell:nth-child(2)")
                 ?.querySelector("sap-crm-tag")
