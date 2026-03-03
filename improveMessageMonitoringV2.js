@@ -185,6 +185,7 @@ const processMessageTable = () => {
                                 row.querySelector("sap-crm-tag")
                                     ?.shadowRoot?.querySelector("div")
                                     ?.style.setProperty("text-transform", "unset", "important");
+                          			row.querySelector("sap-crm-table-cell:nth-child(3)").style.setProperty("min-width", "max-content", "important");
                             })
                             .catch((error) => {
                                 console.error(`Fehler beim Submessage-API-Request ( ${fetchUrl} ):`, error);
@@ -264,6 +265,7 @@ const processSubMessageTable = () => {
                         row.querySelector("sap-crm-tag")
                             ?.shadowRoot?.querySelector("div")
                             ?.style.setProperty("text-transform", "unset", "important");
+                        row.querySelector("sap-crm-table-cell:nth-child(2)").style.setProperty("min-width", "max-content", "important");
                     })
                     .catch((error) => {
                         console.error(`Fehler beim API-Request ( ${fetchUrl} ):`, error);
