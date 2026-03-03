@@ -2,7 +2,7 @@
 // @name        Verbesserung Nachrichtenüberwachung Sales Cloud v2
 // @match       https://*.crm.cloud.sap/*
 // @grant       none
-// @version     1.9
+// @version     1.10
 // @description Verbesserung der Nachrichtenüberwachung
 // ==/UserScript==
 
