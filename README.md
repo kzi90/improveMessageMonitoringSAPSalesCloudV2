@@ -4,12 +4,12 @@
 
 ## Functionality
 
-This adds a button to download all error messages as plain text and as json, message headers included.
-Furthermore it replaces the status-text "ERROR" or "Fehler" with the actual error message in the message monitoring overview table (only first error from first error-submessage) and also in the submessage table (all errors).
+This adds a button to download all error messages as plain text and as json.
+Furthermore it replaces the status-text "ERROR" or "Fehler" with the actual error message in the message monitoring overview table (only first error from first error-submessage).
 
 ## Usage
 
-Install the [User Script](./improveMessageMonitoringV2.js) via a browser addon like Greasemonkey, Tampermonkey or Violentmonkey (just copy it in there). Tested with Greasemonkey on Firefox
+Install the [User Script](./improveMessageMonitoringV2.js) via a browser addon like Greasemonkey, Tampermonkey or Violentmonkey (just copy it in there). Tested with Greasemonkey on Firefox and with Tampermonkey in Chrome, Edge and Brave
 
 ## Contributions
 
