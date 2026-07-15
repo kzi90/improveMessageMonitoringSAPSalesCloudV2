@@ -2,7 +2,7 @@
 // @name         Verbesserung Nachrichtenüberwachung SAP Sales Cloud v2
 // @match        https://*.crm.cloud.sap/*
 // @grant        none
-// @version      1.11
+// @version      1.12
 // ==/UserScript==
 
 (function() {
@@ -149,7 +149,7 @@
                 ?.shadowRoot?.querySelector("span");
 
             if (["Fehler", "ERROR"].includes(statusElement?.textContent?.trim()) && messageId) {
-                const fetchUrl = `https://${HOST}/sap/c4c/api/v1/${direction}-data-connector-service/messages/${messageHeadId}/requests/${messageId}/errorData`;
+                const fetchUrl = `https://${HOST}/sap/c4c/api/v1/${direction}-data-connector-service/messages/${messageHeadId}/requests/${messageId}${direction === "inbound" ? "/errorData" : ""}`;
                 fetch(fetchUrl)
                     .then((response) => {
                         if (!response.ok) throw new Error(`HTTP-Fehler: ${response.status}`);
@@ -173,7 +173,7 @@
                         tableCellDiv?.style.setProperty("min-width", "max-content", "important");
                     })
                     .catch((error) => {
-                        console.error(`Fehler bei Request für ID ${messageId}:`, error);
+                        console.error(`Fehler bei Request an ${fetchUrl}\n`, error);
                     });
             }
         }
