@@ -2,7 +2,7 @@
 // @name         Verbesserung Nachrichtenüberwachung SAP Sales Cloud v2
 // @match        https://*.crm.cloud.sap/*
 // @grant        none
-// @version      1.12
+// @version      1.13
 // ==/UserScript==
 
 (function() {
@@ -36,9 +36,9 @@
                         const errorMessageSubMessageDetailsData = await fetch(fetchUrl).then((res) => res.json());
                         const newSubMessage = errorMessageSubMessageDetailsData?.value;
                         inboundErrorsOnly +=
-                            (newSubMessage?.error?.details?.[0]?.details?.map((d) => d.message)?.join("\n") ||
-                                newSubMessage?.error?.details?.[0]?.message ||
-                                newSubMessage?.error?.message) +
+                            (newSubMessage?.error?.details?.[0]?.details?.map((d) => d.message?.trim())?.join("\n") ||
+                                newSubMessage?.error?.details?.[0]?.message?.trim() ||
+                                newSubMessage?.error?.message?.trim()) +
                             " | " +
                             message.id +
                             " | " +
@@ -71,9 +71,9 @@
                         const errorMessageSubMessageDetailsData = await fetch(fetchUrl).then((res) => res.json());
                         const newSubMessage = errorMessageSubMessageDetailsData?.value;
                         outboundErrorsOnly +=
-                            (newSubMessage?.error?.details?.[0]?.details?.map((d) => d.message)?.join("\n") ||
-                                newSubMessage?.error?.details?.[0]?.message ||
-                                newSubMessage?.error?.message) +
+                            (newSubMessage?.error?.details?.[0]?.details?.map((d) => d.message?.trim())?.join("\n") ||
+                                newSubMessage?.error?.details?.[0]?.message?.trim() ||
+                                newSubMessage?.error?.message?.trim()) +
                             " | " +
                             message.id +
                             " | " +
